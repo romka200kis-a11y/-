@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Калькулятор | Современный дизайн</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none; /* предотвращает выделение текста на кнопках */
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #1e2a3a 0%, #0f1724 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, 'Roboto', sans-serif;
+            padding: 20px;
+        }
+
+        /* каркас калькулятора */
+        .calculator {
+            background: rgba(18, 25, 45, 0.75);
+            backdrop-filter: blur(2px);
+            border-radius: 52px;
+            padding: 24px 22px 32px 22px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            width: 100%;
+            max-width: 440px;
+            transition: all 0.2s;
+        }
+
+        /* экран */
+        .display {
+            background: #0a0f1c;
+            border-radius: 38px;
+            padding: 25px 20px;
+            margin-bottom: 28px;
+            box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.05);
+            text-align: right;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .previous-operand {
+            font-size: 1.35rem;
+            color: #8e9aaf;
+            min-height: 32px;
+            letter-spacing: 0.5px;
+            font-weight: 400;
+        }
+
+        .current-operand {
+            font-size: 3.4rem;
+            font-weight: 600;
+            color: #f0f3ff;
+            line-height: 1.2;
+            margin-top: 8px;
+            letter-spacing: 1px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        /* сетка кнопок */
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+
+        /* общий стиль кнопок */
+        button {
+            background: #1e2a3c;
+            border: none;
+            padding: 20px 0;
+            border-radius: 32px;
+            font-size: 1.65rem;
+            font-weight: 500;
+            color: #eef4ff;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 5px 0 #0f141f;
+            font-family: inherit;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(4px);
+        }
+
+        button:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #0f141f;
+        }
+
+        /* кнопки операторов и специальные */
+        .operator {
+            background: #ff8c42;
+            color: #ffffff;
+            text-shadow: 0 1px 0 #aa4e0c;
+            box-shadow: 0 5px 0 #b45a1a;
+            font-size: 1.9rem;
+            font-weight: 600;
+        }
+
+        .clear {
+            background: #d9526c;
+            box-shadow: 0 5px 0 #9e2e46;
+            color: white;
+        }
+
+        .delete {
+            background: #5c6f87;
+            box-shadow: 0 5px 0 #3a475c;
+            font-size: 1.5rem;
+        }
+
+        .equal {
+            background: #2a9d8f;
+            box-shadow: 0 5px 0 #1e6b60;
+            font-size: 2rem;
+        }
+
+        /* кнопка 0 занимает 2 колонки */
+        .span-two {
+            grid-column: span 2;
+        }
+
+        /* hover эффект для десктопа */
+        @media (hover: hover) {
+            button:hover {
+                filter: brightness(1.08);
+                transform: translateY(-1px);
+                box-shadow: 0 6px 0 #0f141f;
+            }
+            button:active:hover {
+                transform: translateY(3px);
+                box-shadow: 0 2px 0 #0f141f;
+            }
+        }
+
+        /* адаптив для маленьких экранов */
+        @media (max-width: 450px) {
+            .calculator {
+                padding: 18px 16px 24px 16px;
+            }
+            button {
+                padding: 16px 0;
+                font-size: 1.4rem;
+            }
+            .current-operand {
+                font-size: 2.6rem;
+            }
+            .operator {
+                font-size: 1.7rem;
+            }
+            .buttons {
+                gap: 10px;
+            }
+        }
+
+        /* легкая анимация появления */
+        @keyframes fadeSlide {
+            from {
+                opacity: 0;
+                transform: scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        .calculator {
+            animation: fadeSlide 0.3s ease-out;
+        }
+    </style>
+</head>
+<body>
+<div class="calculator">
+    <div class="display">
+        <div class="previous-operand" id="previousOperand"></div>
+        <div class="current-operand" id="currentOperand">0</div>
+    </div>
+    <div class="buttons">
+        <!-- Строка 1 -->
+        <button class="clear" data-action="clear">AC</button>
+        <button class="delete" data-action="delete">⌫</button>
+        <button class="operator" data-op="%">%</button>
+        <button class="operator" data-op="/">÷</button>
+
+        <!-- Строка 2 -->
+        <button data-num="7">7</button>
+        <button data-num="8">8</button>
+        <button data-num="9">9</button>
+        <button class="operator" data-op="*">×</button>
+
+        <!-- Строка 3 -->
+        <button data-num="4">4</button>
+        <button data-num="5">5</button>
+        <button data-num="6">6</button>
+        <button class="operator" data-op="-">−</button>
+
+        <!-- Строка 4 -->
+        <button data-num="1">1</button>
+        <button data-num="2">2</button>
+        <button data-num="3">3</button>
+        <button class="operator" data-op="+">+</button>
+
+        <!-- Строка 5: 0, точка, равно -->
+        <button data-num="0" class="span-two">0</button>
+        <button data-num=".">.</button>
+        <button class="equal" data-action="equals">=</button>
+    </div>
+</div>
+
+<script>
+    // ------ Класс логики калькулятора (чистая реализация) ------
+    class Calculator {
+        constructor(previousOperandElement, currentOperandElement) {
+            this.previousOperandElement = previousOperandElement;
+            this.currentOperandElement = currentOperandElement;
+            this.clear();
+        }
+
+        clear() {
+            this.currentOperand = '0';
+            this.previousOperand = '';
+            this.operation = undefined;
+            this.shouldResetScreen = false;   // флаг для сброса после равно/операции
+            this.updateDisplay();
+        }
+
+        delete() {
+            if (this.currentOperand === '0' && this.previousOperand === '') return;
+            // если число 0 и больше ничего, не удаляем
+            if (this.currentOperand.length === 1) {
+                this.currentOperand = '0';
+            } else {
+                this.currentOperand = this.currentOperand.slice(0, -1);
+                // если после удаления пустая строка -> ставим 0
+                if (this.currentOperand === '') this.currentOperand = '0';
+            }
+            this.updateDisplay();
+        }
+
+        appendNumber(number) {
+            // если флаг сброса активен (после равно или операции), начинаем новое число
+            if (this.shouldResetScreen) {
+                this.currentOperand = '';
+                this.shouldResetScreen = false;
+            }
+            // ограничение длины числа (чтобы не переполнять экран)
+            if (this.currentOperand.length >= 18) return;
+
+            if (number === '.') {
+                // если уже есть точка, игнорируем
+                if (this.currentOperand.includes('.')) return;
+                // если текущее число пустое или равно "0" добавляем "0."
+                if (this.currentOperand === '' || this.currentOperand === '0') {
+                    this.currentOperand = '0.';
+                    this.updateDisplay();
+                    return;
+                }
+                this.currentOperand += '.';
+            } else {
+                // Запрещаем ведущие нули: если текущее значение '0' и добавляется цифра (не точка)
+                if (this.currentOperand === '0' && number !== '.') {
+                    this.currentOperand = number;
+                } else {
+                    this.currentOperand += number;
+                }
+            }
+            this.updateDisplay();
+        }
+
+        chooseOperation(operation) {
+            // если текущее значение пустое или равно 0 и нет предыдущего — не делаем операцию (кроме минуса унарного? но стандартно игнорируем)
+            if (this.currentOperand === '' && this.previousOperand === '') return;
+            // если есть предыдущий операнд и операция, вычисляем перед новой операцией (цепочка)
+            if (this.previousOperand !== '' && !this.shouldResetScreen) {
+                this.compute();
+            }
+            this.operation = operation;
+            // переносим текущее значение в предыдущее, если текущее не пусто
+            if (this.currentOperand !== '') {
+                this.previousOperand = this.currentOperand;
+            } else {
+                // если текущее пустое (например, после ошибки) то ничего не делаем
+                if (this.previousOperand === '') return;
+            }
+            // сброс флага, так как теперь ожидаем ввод второго числа
+            this.shouldResetScreen = false;
+            this.currentOperand = '';   // очищаем поле для ввода второго числа
+            this.updateDisplay();
+        }
+
+        compute() {
+            let computation;
+            const prev = parseFloat(this.previousOperand);
+            const current = parseFloat(this.currentOperand);
+            if (isNaN(prev) || isNaN(current)) return;
+            // защита от деления на ноль
+            if (this.operation === '/' && current === 0) {
+                alert("Ошибка: деление на ноль!");
+                this.clear();
+                return;
+            }
+            switch (this.operation) {
+                case '+':
+                    computation = prev + current;
+                    break;
+                case '-':
+                    computation = prev - current;
+                    break;
+                case '*':
+                    computation = prev * current;
+                    break;
+                case '/':
+                    computation = prev / current;
+                    break;
+                case '%':
+                    computation = prev % current;
+                    break;
+                default:
+                    return;
+            }
+            // ограничение количества знаков после запятой для длинных чисел
+            if (Math.abs(computation) > 1e12) {
+                // если число огромное, оставляем в экспоненциальной форме, но урезаем читаемость
+                this.currentOperand = computation.toExponential(10);
+            } else {
+                // округление до 10 знаков, чтобы избежать длинных хвостов (0.1 + 0.2)
+                let rounded = parseFloat(computation.toFixed(10));
+                this.currentOperand = String(rounded);
+                // убираем лишние trailing .0 если нужно
+                if (this.currentOperand.includes('.') && this.currentOperand.endsWith('.0')) {
+                    this.currentOperand = this.currentOperand.slice(0, -2);
+                }
+            }
+            this.operation = undefined;
+            this.previousOperand = '';
+            this.shouldResetScreen = true;   // после вычисления следующий ввод начнет новое выражение
+            this.updateDisplay();
+        }
+
+        // альтернативный метод для кнопки равно — просто вызываем compute()
+        evaluate() {
+            if (this.previousOperand === '' || this.currentOperand === '' || this.operation === undefined) return;
+            this.compute();
+        }
+
+        updateDisplay() {
+            // форматируем отображение: если есть операция, показываем предыдущий операнд и знак
+            if (this.operation != null) {
+                this.previousOperandElement.innerText = `${this.previousOperand} ${this.getOperationSymbol(this.operation)}`;
+            } else {
+                this.previousOperandElement.innerText = this.previousOperand;
+            }
+            // отображение текущего числа — если это пустая строка, показываем 0 (но по логике после выбора операции currentOperand очищается, но на экране должен быть ноль? Лучше 0)
+            let displayCurrent = this.currentOperand === '' ? '0' : this.currentOperand;
+            // избегаем слишком длинной строки на дисплее (обрезаем, но не ломаем)
+            if (displayCurrent.length > 22) {
+                displayCurrent = parseFloat(displayCurrent).toExponential(12);
+            }
+            this.currentOperandElement.innerText = displayCurrent;
+        }
+
+        getOperationSymbol(op) {
+            switch (op) {
+                case '+': return '+';
+                case '-': return '−';
+                case '*': return '×';
+                case '/': return '÷';
+                case '%': return '%';
+                default: return '';
+            }
+        }
+
+        // обработка специальных случаев: например, если пользователь начинает новое выражение после равно
+        handleInitial() {
+            if (this.shouldResetScreen) {
+                this.clear();
+            }
+        }
+    }
+
+    // ------ Инициализация DOM и подключение обработчиков ------
+    const previousOperandElement = document.getElementById('previousOperand');
+    const currentOperandElement = document.getElementById('currentOperand');
+    const calculator = new Calculator(previousOperandElement, currentOperandElement);
+
+    // Получаем все цифровые кнопки
+    const numberButtons = document.querySelectorAll('[data-num]');
+    const operatorButtons = document.querySelectorAll('[data-op]');
+    const clearButton = document.querySelector('[data-action="clear"]');
+    const deleteButton = document.querySelector('[data-action="delete"]');
+    const equalButton = document.querySelector('[data-action="equals"]');
+
+    // Обработчики для цифр и точки
+    numberButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const value = btn.getAttribute('data-num');
+            calculator.appendNumber(value);
+        });
+    });
+
+    // Обработчики для операторов (+, -, *, /, %)
+    operatorButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const op = btn.getAttribute('data-op');
+            calculator.chooseOperation(op);
+        });
+    });
+
+    // Кнопка AC (очистка всего)
+    clearButton.addEventListener('click', () => {
+        calculator.clear();
+    });
+
+    // Кнопка удаления последнего символа (backspace)
+    deleteButton.addEventListener('click', () => {
+        calculator.delete();
+    });
+
+    // Кнопка равно
+    equalButton.addEventListener('click', () => {
+        calculator.evaluate();
+    });
+
+    // Дополнительно: поддержка клавиатуры (удобно для пользователей)
+    window.addEventListener('keydown', (e) => {
+        const key = e.key;
+        // Цифры и точка
+        if (/^[0-9]$/.test(key)) {
+            e.preventDefault();
+            calculator.appendNumber(key);
+        }
+        if (key === '.') {
+            e.preventDefault();
+            calculator.appendNumber('.');
+        }
+        // Операторы
+        if (key === '+' || key === '-' || key === '*' || key === '/' || key === '%') {
+            e.preventDefault();
+            let mappedOp = key;
+            if (key === '*') mappedOp = '*';
+            if (key === '/') mappedOp = '/';
+            if (key === '%') mappedOp = '%';
+            calculator.chooseOperation(mappedOp);
+        }
+        // Enter / = для равно
+        if (key === 'Enter' || key === '=') {
+            e.preventDefault();
+            calculator.evaluate();
+        }
+        // Backspace для удаления
+        if (key === 'Backspace') {
+            e.preventDefault();
+            calculator.delete();
+        }
+        // Escape или Delete для очистки (AC)
+        if (key === 'Escape' || key === 'Delete') {
+            e.preventDefault();
+            calculator.clear();
+        }
+    });
+
+    // Легкая инициализация отображения (0)
+    calculator.updateDisplay();
+
+    // Предотвращаем случайные действия при долгом нажатии на мобильных (контекстное меню)
+    const allBtns = document.querySelectorAll('button');
+    allBtns.forEach(btn => {
+        btn.addEventListener('contextmenu', (e) => e.preventDefault());
+        btn.addEventListener('dragstart', (e) => e.preventDefault());
+    });
+</script>
+</body>
+</html>
